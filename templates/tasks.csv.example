@@ -1,0 +1,3 @@
+id;status;project;org;object;task_type;depends_on;agent;worktree;prompt;result;created;started;completed;notion_page_id;hu_code;req_origin;commit;deploy_ref;sync_state
+TASK-0001;pending;mi_proyecto;mi_org_sandbox;Account;gvs;;;;	.sfcrew/tasks/TASK-0001.md;;2026-01-15T10:00:00;;;<page_id>;HU-M01;REQ-01;;;
+TASK-0002;pending;mi_proyecto;mi_org_sandbox;Account;field;TASK-0001;;;	.sfcrew/tasks/TASK-0002.md;;2026-01-15T10:00:00;;;<page_id>;HU-M01;REQ-01;;;

@@ -1,0 +1,16 @@
+{
+  "project": "<carpeta SFDX del proyecto>",
+  "org": "<alias sf del org sandbox>",
+  "org_type": "sandbox",
+  "prefix": "<PRY_>",
+  "notion_database": "<ID de la base de datos Notion>",
+  "notion_data_source": "collection://<uuid del data source>",
+  "runners_activos": ["claude", "deepseek"],
+  "runners_reserva": ["glm", "grok"],
+  "schema_version": 2,
+  "adoption_thresholds": {
+    "campo": 40,
+    "objeto": 1,
+    "report": 14
+  }
+}

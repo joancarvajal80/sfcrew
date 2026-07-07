@@ -1,0 +1,26 @@
+# API keys y configuración local
+*.env
+providers.env
+.env.local
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Datos de proyectos (no commiteables)
+**/notion_map.csv
+**/sync_state.json
+**/.notion_snapshot.json
+**/.sync_plan.json
+**/sync_conflicts.md
+**/adoption.json
+
+# Tablero generado
+**/dashboard/
+
+# VS Code
+.vscode/
+
+# macOS
+.DS_Store
