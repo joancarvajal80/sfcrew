@@ -1,4 +1,4 @@
-# Quickstart — SFCrew 2.0
+# Quickstart — SFCrew 3.0
 
 ## Prerequisitos
 
@@ -34,10 +34,10 @@ if (Test-Path $providersEnv) {
     }
 }
 
-# Claude Code normal (Anthropic)
+# Claude Code (Architect)
 function claude-anthropic { claude @args }
 
-# DeepSeek V4 via API compatible con Anthropic
+# DeepSeek v3 — runner principal
 function claude-deepseek {
     $env:ANTHROPIC_BASE_URL = "https://api.deepseek.com/anthropic"
     $env:ANTHROPIC_AUTH_TOKEN = $env:DEEPSEEK_API_KEY
@@ -47,7 +47,7 @@ function claude-deepseek {
     claude @args
 }
 
-# ZAI / GLM (Zhipu AI)
+# GLM (ZhipuAI) — runner secundario y pre-revisor
 function claude-zai {
     $env:ANTHROPIC_BASE_URL = "https://api.z.ai/api/anthropic"
     $env:ANTHROPIC_AUTH_TOKEN = $env:ZAI_API_KEY
@@ -75,7 +75,7 @@ El skill pedirá:
 - Alias del org en SF CLI
 - Prefijo del proyecto (`PRY_`, `MDX_`, etc.)
 
-Genera `{proyecto}/.sfcrew/config.json` y actualiza la base Notion con las propiedades SFCrew.
+Genera `{proyecto}/.sfcrew/config.json`, actualiza la base Notion con las propiedades SFCrew y crea `notion_map.csv`.
 
 ## 4. Migrar desde v1 (si ya tienes un tasks.csv)
 
@@ -88,13 +88,39 @@ python ~/.claude/skills/crew/scripts/migrate_tasks_csv_v2.py .sfcrew/tasks.csv -
 ## 5. Operación diaria
 
 ```
-crew status          # pulso del proyecto
-crew plan HU-XXX    # planifica una HU y asigna runners
-crew sync           # sincroniza Notion ⇄ CSV
-crew approve        # integra el lote listo
-crew exceptions     # solo lo que necesita atención
-crew dashboard      # tablero HTML local
+crew status          # pulso: conteos, cola de aprobación, excepciones
+crew plan HU-XXX    # genera tareas desde una HU y asigna runners
+crew tick            # un ciclo completo: runners → review → pre-revisión → dashboard
+crew exceptions     # solo lo que necesita atención (blocked, returned, conflictos)
+crew approve        # integra el lote revisado y aprobado por Opus
+crew sync           # sincroniza Notion ⇄ CSV manualmente
+crew dashboard      # regenera el tablero HTML local
+crew console        # servidor local en http://localhost:8787 (solo lectura)
 ```
+
+## 6. Ciclo tick detallado
+
+```powershell
+# Solo plan (sin ejecutar runners)
+powershell -File ~/.claude/skills/crew/scripts/tick.ps1 -Sfcrew ".sfcrew"
+
+# Ejecutar runners headless tier=auto
+powershell -File ~/.claude/skills/crew/scripts/tick.ps1 -Sfcrew ".sfcrew" -Execute
+
+# Ejecutar + pre-revisión GLM
+powershell -File ~/.claude/skills/crew/scripts/tick.ps1 -Sfcrew ".sfcrew" -Execute -PreReview
+```
+
+El tick genera los artefactos de revisión en `.sfcrew/reviews/`. La revisión final Opus es manual por ahora: leer PAYLOAD + PREREVIEW en una sesión Architect y aplicar `APROBADA` / `returned` / `blocked` en el CSV.
+
+## 7. Consola local
+
+```bash
+python ~/.claude/skills/crew/scripts/console.py
+# Abrir http://localhost:8787
+```
+
+Vistas disponibles: `/` (excepciones + cola de aprobación), `/board` (kanban por estado), `/task/TASK-NNNN` (detalle con el .md renderizado). Solo lectura — las acciones siguen siendo `crew approve` / `crew dispatch`.
 
 ## Estructura del worktree de un proyecto
 
@@ -107,6 +133,7 @@ crew dashboard      # tablero HTML local
 │   │   └── TASK-NNNN.md
 │   ├── notion_map.csv
 │   ├── sync_state.json
+│   ├── reviews/           ← payloads de revisión generados por review.py
 │   └── archive/
 ├── force-app/
 └── ...
@@ -114,6 +141,15 @@ crew dashboard      # tablero HTML local
 {proyecto}_worktrees/
 ├── ExeClaude/
 ├── ExeDeepSeek/
-├── ExeGLM/
-└── ExeGrok/
+└── ExeGLM/
 ```
+
+## Schema tasks.csv v2 (referencia)
+
+```
+id;status;project;org;object;task_type;depends_on;agent;worktree;prompt;
+result;created;started;completed;notion_page_id;hu_code;req_origin;
+commit;deploy_ref;sync_state;headless_tier
+```
+
+`headless_tier`: `auto` (dispatcher lanza sin intervención), `manual` (Joan lanza), `interactive` (requiere sesión interactiva).
